@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import Modal from './Modal';
+import { UploadImageProps } from '../interfaces/UploadImageProps';
 
-function UploadImage({ images, setImages }) {
-    const [selectedImage, setSelectedImage] = useState(null)
-    const [error, setError] = useState(null)
-    const [modalOpen, setModalOpen] = useState(false)
+  function UploadImage({ images, setImages }: UploadImageProps) {
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
 
-    const uploadImage = async (e) => {
+    const upload = async (e: ChangeEvent<HTMLInputElement>) => {
         const formData = new FormData()
         formData.append('file', e.target.files[0])
         setModalOpen(true)
         setSelectedImage(e.target.files[0])
         e.target.value = null
+        
         try {
             const options = {
                 method: "POST",
@@ -31,7 +33,7 @@ function UploadImage({ images, setImages }) {
             const options = {
                 method: 'POST',
             }
-            const response = await fetch('http://localhost:8000/edit', options)
+            const response = await fetch('http://localhost:8000/variations', options)
             const data = await response.json()
             setImages(data)
             setError(null)
@@ -60,7 +62,7 @@ function UploadImage({ images, setImages }) {
                     className="bg-blue-500 hover:bg-blue-700 text-white py-7 px-8 rounded-full text-2xl w-[20vw] shadow-lg cursor-pointer"  
                     accept='image/*'
                     type='file'
-                    onChange={uploadImage}
+                    onChange={upload}
                 />
                 <span className="text-xl mt-[1.4rem]">or drop a file</span>
             </div>

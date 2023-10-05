@@ -1,9 +1,8 @@
 import { useState, useRef } from "react";
-function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }) {
-    const [error, setError] = useState('')
-    const ref = useRef(null)
-
-    console.log('selectedImage', selectedImage)
+import { ModalProps } from "../interfaces/ModalProps";
+function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: ModalProps) {
+    const [error, setError] = useState<string>('');
+    const ref = useRef<HTMLImageElement>(null);
 
     const closeModal = () => {
         setModalOpen(false)
@@ -11,7 +10,7 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }) {
     }
 
     const checkSize = async () => {
-        if (ref.current.width == 256 && ref.current.height == 256) {
+        if (ref.current && ref.current.width === 256 && ref.current.height === 256) {
             await editImage()
         } else {
             setError('Error: Choose 256 x 256 image')
