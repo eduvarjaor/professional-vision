@@ -1,9 +1,9 @@
-import express, { Request, Response } from 'express'
+import express from 'express'
 import cors from 'cors'
 import { config } from 'dotenv'
 import fs from 'fs'
 import OpenAI from 'openai'
-import multer, { MulterError } from 'multer'
+import multer from 'multer'
 
 const PORT = 8000
 const app = express()
@@ -27,10 +27,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage }).single('file')
 
-let filePath: string | undefined
+let filePath
 
-app.post('/upload', (req: Request, res: Response) => {
-  upload(req, res, (err: MulterError) => {
+app.post('/upload', (req, res) => {
+  upload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       return res.status(500).json(err)
     } else if (err) {
@@ -41,7 +41,7 @@ app.post('/upload', (req: Request, res: Response) => {
   })
 })
 
-app.post('/variations', async (req: Request, res: Response) => {
+app.post('/variations', async (req, res) => {
   if (!filePath) {
     return res.status(400).send('File path not available')
   }
@@ -60,7 +60,7 @@ app.post('/variations', async (req: Request, res: Response) => {
   }
 })
 
-app.post('/edit', async (req: Request, res: Response) => {
+app.post('/edit', async (req, res) => {
   if (!filePath) {
     return res.status(400).send('File path not available')
   }
