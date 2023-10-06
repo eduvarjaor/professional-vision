@@ -13,7 +13,7 @@ app.use(express.json())
 config()
 
 const openai = new OpenAI()
-openai.apiKey = 'secret'
+openai.apiKey = process.env.VITE_OPENAI_API_KEY
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
