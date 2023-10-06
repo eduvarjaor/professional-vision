@@ -49,7 +49,6 @@ app.post('/variations', async (req, res) => {
   try {
     const response = await openai.images.createVariation({
       image: fs.createReadStream(filePath),
-      n: 1,
       size: '256x256',
     })
     console.log(response.data)
@@ -68,6 +67,7 @@ app.post('/edit', async (req, res) => {
   try {
     const response = await openai.images.edit({
       image: fs.createReadStream(filePath),
+      mask: fs.createReadStream(filePath),
       prompt: 'Make a realistic photo of this person as a business man',
       size: '256x256',
     })
