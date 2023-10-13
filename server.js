@@ -4,6 +4,8 @@ import { config } from 'dotenv'
 import fs from 'fs'
 import OpenAI from 'openai'
 import multer from 'multer'
+import sharp from 'sharp'
+import path from 'path'
 
 const PORT = 8000
 const app = express()
@@ -28,6 +30,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage }).single('file')
 
 let filePath
+const filePathRGBA = 'public/rgba-images'
 
 app.post('/upload', (req, res) => {
   upload(req, res, (err) => {
@@ -37,26 +40,31 @@ app.post('/upload', (req, res) => {
       return res.status(500).json(err)
     }
     filePath = req.file?.path
-    res.status(200).send('File uploaded')
+
+    if (!fs.existsSync(filePathRGBA)) {
+      try {
+        fs.mkdirSync(filePathRGBA, { recursive: true })
+      } catch (mkdirErr) {
+        console.error('Error creating directory:', mkdirErr)
+        return res.status(500).send('Error creating directory.')
+      }
+    }
+
+    sharp(filePath)
+      .ensureAlpha()
+      .toFile(
+        path.join(filePathRGBA, path.basename(filePath)),
+        (sharpErr, info) => {
+          if (sharpErr) {
+            console.error('Error converting image:', sharpErr)
+            return res.status(500).send('Error converting image.')
+          } else {
+            console.log('Image converted successfully: ', info)
+            res.status(200).send('File uploaded')
+          }
+        },
+      )
   })
-})
-
-app.post('/variations', async (req, res) => {
-  if (!filePath) {
-    return res.status(400).send('File path not available')
-  }
-
-  try {
-    const response = await openai.images.createVariation({
-      image: fs.createReadStream(filePath),
-      size: '256x256',
-    })
-    console.log(response.data)
-    res.send(response.data)
-  } catch (error) {
-    console.log(error)
-    res.status(500).send('Internal server error')
-  }
 })
 
 app.post('/edit', async (req, res) => {
@@ -64,19 +72,17 @@ app.post('/edit', async (req, res) => {
     return res.status(400).send('File path not available')
   }
 
-  try {
-    const response = await openai.images.edit({
-      image: fs.createReadStream(filePath),
-      mask: fs.createReadStream(filePath),
-      prompt: 'Make a realistic photo of this person as a business man',
-      size: '256x256',
-    })
-    console.log(response.data)
-    res.send(response.data)
-  } catch (error) {
-    console.log(error)
-    res.status(500).send('Internal server error')
-  }
+  const filedir = filePath.split('\\').pop()
+
+  const response = await openai.images.edit({
+    image: fs.createReadStream(filePath),
+    mask: fs.createReadStream(path.join(filePathRGBA, filedir)),
+    prompt: 'Put a suit on that person',
+    size: '256x256',
+  })
+
+  console.log(response.data)
+  res.send(response.data)
 })
 
 app.listen(PORT, () => console.log('Your server is running on PORT ' + PORT))

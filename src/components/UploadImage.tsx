@@ -72,7 +72,7 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
             const options = {
                 method: 'POST',
             }
-            const response = await fetch('http://localhost:8000/variations', options)
+            const response = await fetch('http://localhost:8000/edit', options)
             const data = await response.json()
             setImages(data)
             setError(null)
