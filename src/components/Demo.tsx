@@ -1,8 +1,8 @@
-import Example from '/public/images/Example.png'
+import Illustration from '/public/images/Illustration.png'
 function Demo() {
     return ( 
         <div className="h-[60vh] w-[35vw]">
-            <img src={Example} alt="Demo" className="w-full h-full object-cover rounded-3xl shadow-xl" />
+            <img src={Illustration} alt="Demo" className="w-full h-full object-cover rounded-3xl shadow-xl" />
         </div>
     );
 }
