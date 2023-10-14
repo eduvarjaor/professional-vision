@@ -85,4 +85,8 @@ app.post("/edit", async (req, res) => {
     res.send(response.data);
 });
 
+app.get("*", (req, res) => {
+    res.status(404).send("Page not found");
+});
+
 app.listen(PORT, () => console.log("Your server is running on PORT " + PORT));
