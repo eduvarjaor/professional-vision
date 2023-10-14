@@ -4,9 +4,9 @@ import { UploadImageProps } from '../interfaces/UploadImageProps';
 
 type DivDragEvent = React.DragEvent<HTMLDivElement>;
 
-  function UploadImage({ images, setImages }: UploadImageProps) {
+  function UploadImage({ setImages }: UploadImageProps) {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const windowWidth = window.innerWidth;
@@ -48,23 +48,35 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
       }
 
     const upload = async (e: ChangeEvent<HTMLInputElement>) => {
-        const formData = new FormData()
-        formData.append('file', e.target.files[0])
-        setModalOpen(true)
-        setSelectedImage(e.target.files[0])
-        e.target.value = null
+        const fileInput = e.target;
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+
+        const selectedFile = fileInput.files[0];
+
+        if (!selectedFile) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        setModalOpen(true);
+        setSelectedImage(selectedFile);
         
         try {
             const options = {
                 method: "POST",
                 body: formData
-            }
+            };
 
-            const response = await fetch('http://localhost:8000/upload', options)
-            const data = await response.json()
-            return data
+            const response = await fetch('http://localhost:8000/upload', options);
+            const data = await response.json();
+            return data;
         } catch (error) {
-            console.error(error)
+            console.error(error);
+        } finally {
+            fileInput.value = '';
         }
     }
 

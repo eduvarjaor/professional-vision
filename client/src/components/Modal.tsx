@@ -34,11 +34,11 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
     const checkSize = async () => {
         try {
             setLoading(true);
-    
+
             if (selectedImage) {
                 const img = new Image();
                 img.src = URL.createObjectURL(selectedImage);
-    
+
                 if (ref.current && ref.current.width === 256 && ref.current.height === 256 && selectedImage.type === 'image/png') {
                     await editImage();
                 } else {
@@ -48,7 +48,11 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
                 setError('Error: No image selected');
             }
         } catch (error) {
-            setError('An error occurred: ' + error.message);
+            if (typeof error === 'string') {
+                setError('An error occurred: ' + error);
+            } else {
+                setError('An unexpected error occurred');
+            }
         } finally {
             setLoading(false);
         }
