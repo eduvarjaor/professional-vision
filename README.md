@@ -1,6 +1,6 @@
 # Professional Vision
 
-![Usage](/public/images/Usage.gif)
+![Usage](frontend/public/images/Usage.gif)
 
 ### About
 
@@ -18,11 +18,11 @@ This innovative application seamlessly blends the magic of AI with the convenien
 ### Layout
 
 <p align="center">
-  <img src="public/images/PC.png" alt="PC">
+  <img src="frontend/public/images/PC.png" alt="PC">
 </p>
 
 <p align="center">
-  <img src="public/images/Phone.png" alt="Phone">
+  <img src="frontend/public/images/Phone.png" alt="Phone">
 </p>
 
 ### Requirements
