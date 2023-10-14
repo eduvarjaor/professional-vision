@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ModalProps } from "../interfaces/ModalProps";
 import { AiOutlineClose } from 'react-icons/ai'
 
@@ -6,6 +6,25 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const ref = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const modalElement = document.getElementById("modal-container");
+
+            if (modalElement) {
+                const rect = modalElement.getBoundingClientRect();
+                if (rect.top < 0) {
+                    window.scrollBy(0, rect.top - 10);
+                }
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     const closeModal = () => {
         setModalOpen(false)
@@ -19,7 +38,6 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
             if (selectedImage) {
                 const img = new Image();
                 img.src = URL.createObjectURL(selectedImage);
-                setLoading(true);
     
                 if (ref.current && ref.current.width === 256 && ref.current.height === 256 && selectedImage.type === 'image/png') {
                     await editImage();
@@ -30,7 +48,7 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
                 setError('Error: No image selected');
             }
         } catch (error) {
-            setError('An error occurred.');
+            setError('An error occurred: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -38,7 +56,7 @@ function Modal({ setModalOpen, selectedImage, setSelectedImage, editImage }: Mod
     
     
     return ( 
-        <div className="relative z-50 p-[1rem] flex flex-col bg-gradient-to-r from-zinc-200 to-slate-300 rounded-lg shadow-xl">
+        <div id="modal-container" className="relative z-50 p-[1rem] flex flex-col bg-gradient-to-r from-zinc-200 to-slate-300 rounded-lg shadow-xl">
             <div onClick={closeModal} className="cursor-pointer w-5 text-xl"><AiOutlineClose /></div>
             <div className="h-[256px] w-[256px] overflow-hidden m-2 rounded-xl shadow-xl">
                 {selectedImage && 

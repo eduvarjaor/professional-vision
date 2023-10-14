@@ -9,6 +9,7 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
     const [error, setError] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [isDragging, setIsDragging] = useState<boolean>(false);
+    const windowWidth = window.innerWidth;
 
     const handleDragOver = (e: DivDragEvent) => {
         e.preventDefault();
@@ -83,15 +84,16 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
     }
 
     return (
-        <div 
-            className={`h-[60vh] w-[35vw] rounded-3xl shadow-lg bg-stone-100 ${isDragging ? 'border-dashed border-4 border-blue-500' : ''}`}
+        <div className='lg:p-0 xx:p-5 flex'>
+            <div 
+            className={`h-[60vh] lg:w-[35vw] xx:w-full rounded-3xl shadow-lg ${windowWidth < 370 ? 'bg-stone-300' : 'bg-stone-100' } ${isDragging ? 'border-dashed border-4 border-blue-500' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {modalOpen && 
             <div className='absolute top-0 left-0 w-full h-full flex items-center z-10'>
-                <div className="flex justify-center items-center bg-white bg-opacity-50 p-4 w-full h-[184vh]">
+                <div className="flex justify-center items-center bg-white bg-opacity-50 p-4 w-full lg:h-[184vh] xx:h-[240vh]">
                     <div className='flex justify-center h-[27rem]'>
                         <Modal 
                         setModalOpen={setModalOpen}
@@ -104,7 +106,7 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
             </div>}
 
             <div className="flex flex-col mt-[25vh] items-center">
-            <label className="bg-blue-500 hover:bg-blue-700 text-white py-7 px-8 rounded-full text-2xl shadow-lg cursor-pointer text-center w-[20vw]">
+            <label className="bg-blue-500 hover:bg-blue-700 text-white py-7 px-8 rounded-full text-2xl shadow-lg cursor-pointer text-center lg:w-[20vw]">
                 <span>Choose a file</span>
                 <input 
                 className="hidden"  
@@ -113,8 +115,9 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
                 onChange={upload}
             />
             </label>
-                <span className="text-xl mt-[1.4rem]">or drop a file</span>
+                <span className={windowWidth < 370 ? "hidden" : 'text-xl mt-[1.4rem]'} >or drop a file</span>
             </div>
+        </div>
         </div>
     );
 }
