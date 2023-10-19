@@ -1,6 +1,9 @@
-import { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import Modal from './Modal';
 import { UploadImageProps } from '../interfaces/UploadImageProps';
+import { storage } from '../../firebase';
+import { ref, uploadBytes } from '@firebase/storage'
+import { v4 } from 'uuid';
 
 type DivDragEvent = React.DragEvent<HTMLDivElement>;
 
@@ -9,7 +12,59 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
     const [_error, setError] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [isDragging, setIsDragging] = useState<boolean>(false);
+    const [imagePath, setImagePath] = useState<string>('');
     const windowWidth = window.innerWidth;
+
+    const upload = async (e: ChangeEvent<HTMLInputElement>) => {
+        const fileInput = e.target;
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+    
+        const selectedFile = fileInput.files[0];
+        if (!selectedFile) {
+            return;
+        }
+    
+        const imageRef = ref(storage, `uploaded-images/${selectedFile.name + v4()}`);
+
+        try {
+            await uploadBytes(imageRef, selectedFile);
+            console.log('Upload successful!');
+      
+            setSelectedImage(selectedFile);
+            setModalOpen(true);
+            const uploadedImagePath  = imageRef.fullPath;
+            setImagePath(uploadedImagePath);
+        } catch(error) {
+            console.error('Error uploading image:', error);
+        }
+    }
+
+    const handleEditImage = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/editImage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imagePath }),
+            });
+    
+            const data = await response.json();
+    
+            if (data.success) {
+                console.log('Edited Image URL:', data.data);
+                setImages(data.data)
+                setError(null)
+                setModalOpen(false)
+            } else {
+                console.error('Error editing image:', data.error);
+            }
+        } catch (error) {
+            console.error('Error editing image:', error);
+        }
+    };
 
     const handleDragOver = (e: DivDragEvent) => {
         e.preventDefault();
@@ -40,60 +95,14 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
     
             const response = await fetch('http://localhost:8000/upload', options);
             const data = await response.json()
-            return data
+            setImages(data)
+            setError(null)
+            setModalOpen(false)
           } catch (error) {
             console.error(error);
           }
         }
       }
-
-    const upload = async (e: ChangeEvent<HTMLInputElement>) => {
-        const fileInput = e.target;
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            return;
-        }
-
-        const selectedFile = fileInput.files[0];
-
-        if (!selectedFile) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        setModalOpen(true);
-        setSelectedImage(selectedFile);
-        
-        try {
-            const options = {
-                method: "POST",
-                body: formData
-            };
-
-            const response = await fetch('http://localhost:8000/upload', options);
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error(error);
-        } finally {
-            fileInput.value = '';
-        }
-    }
-
-    const editImage = async () => {
-        try {
-            const options = {
-                method: 'POST',
-            }
-            const response = await fetch('http://localhost:8000/edit', options)
-            const data = await response.json()
-            setImages(data)
-            setError(null)
-            setModalOpen(false)
-        } catch (error) {
-            console.error(error)
-        }
-    }
 
     return (
         <div className='lg:p-0 xx:p-5 flex'>
@@ -111,7 +120,7 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
                         setModalOpen={setModalOpen}
                         selectedImage={selectedImage} 
                         setSelectedImage={setSelectedImage}
-                        editImage={editImage}
+                        editImage={handleEditImage}
                         />
                     </div>
                 </div>
