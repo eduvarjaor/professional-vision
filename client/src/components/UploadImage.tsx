@@ -1,22 +1,19 @@
 import React, { useState, ChangeEvent } from 'react';
 import Modal from './Modal';
 import { UploadImageProps } from '../interfaces/UploadImageProps';
-import { storage } from '../../firebase';
-import { ref, uploadBytes } from '@firebase/storage'
-import { v4 } from 'uuid';
 
 type DivDragEvent = React.DragEvent<HTMLDivElement>;
 
-  function UploadImage({ setImages }: UploadImageProps) {
+function UploadImage({ setImages }: UploadImageProps) {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [_error, setError] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [imagePath, setImagePath] = useState<string>('');
+    const [imagePath, _setImagePath] = useState<string>('');
     const windowWidth = window.innerWidth;
 
-    const upload = async (e: ChangeEvent<HTMLInputElement>) => {
-        const fileInput = e.target;
+    const handleUpload = async (image: ChangeEvent<HTMLInputElement>) => {
+        const fileInput = image.target;
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             return;
         }
@@ -25,17 +22,27 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
         if (!selectedFile) {
             return;
         }
-    
-        const imageRef = ref(storage, `uploaded-images/${selectedFile.name + v4()}`);
+
+        const formData = new FormData();
+        formData.append('image', selectedFile, selectedFile.name);
 
         try {
-            await uploadBytes(imageRef, selectedFile);
-            console.log('Upload successful!');
-      
-            setSelectedImage(selectedFile);
-            setModalOpen(true);
-            const uploadedImagePath  = imageRef.fullPath;
-            setImagePath(uploadedImagePath);
+            console.log(`Selectedfile: ${selectedFile}`)
+            const options = {
+                method: 'POST',
+                body: formData,
+            };
+            const response = await fetch('http://localhost:5000/professional-vision-262b8/us-central1/upload', options);
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('Upload successful!');
+                console.log('Image URL:', data.url);
+                setSelectedImage(selectedFile);
+                setModalOpen(true);
+            } else {
+                console.error('Error uploading image:', data.error);
+            }
         } catch(error) {
             console.error('Error uploading image:', error);
         }
@@ -69,28 +76,28 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
     const handleDragOver = (e: DivDragEvent) => {
         e.preventDefault();
         setIsDragging(true);
-      };
+    };
 
-      const handleDragLeave = () => {
+    const handleDragLeave = () => {
         setIsDragging(false);
-      };
+    };
     
-      const handleDrop = async (e: DivDragEvent) => {
+    const handleDrop = async (e: DivDragEvent) => {
         e.preventDefault();
         setIsDragging(false);   
 
         const file = e.dataTransfer.files[0];
     
         if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          setModalOpen(true);
-          setSelectedImage(file);
+        const formData = new FormData();
+        formData.append('file', file);
+        setModalOpen(true);
+        setSelectedImage(file);
     
-          try {
+        try {
             const options = {
-              method: 'POST',
-              body: formData,
+            method: 'POST',
+            body: formData,
             };
     
             const response = await fetch('http://localhost:8000/upload', options);
@@ -98,11 +105,11 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
             setImages(data)
             setError(null)
             setModalOpen(false)
-          } catch (error) {
+        } catch (error) {
             console.error(error);
-          }
         }
-      }
+    }
+    }
 
     return (
         <div className='lg:p-0 xx:p-5 flex'>
@@ -129,11 +136,12 @@ type DivDragEvent = React.DragEvent<HTMLDivElement>;
             <div className="flex flex-col mt-[25vh] items-center">
             <label className="bg-blue-500 hover:bg-blue-700 text-white py-7 px-8 rounded-full text-2xl shadow-lg cursor-pointer text-center lg:w-[20vw]">
                 <span>Choose a file</span>
-                <input 
+                <input
+                name='file' 
                 className="hidden"  
                 accept='image/*'
                 type='file'
-                onChange={upload}
+                onChange={handleUpload}
             />
             </label>
                 <span className={windowWidth < 370 ? "hidden" : 'text-xl mt-[1.4rem]'} >or drop a file</span>
