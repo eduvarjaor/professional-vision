@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const cors = require("cors");
 const uuid = require("uuid");
 const Busboy = require("busboy");
+const sharp = require("sharp");
 
 require("dotenv").config();
 
@@ -47,41 +48,63 @@ exports.upload = functions.https.onRequest(async (req, res) => {
             busboy.on(
                 "file",
                 (fieldname, file, filename, encoding, mimetype) => {
-                    const filepath = `uploaded-images/${uuid.v4()}.png`;
-                    console.log("Nome do Arquivo:", filepath);
+                    const rgbaFilePath = `rgba-images/${uuid.v4()}.png`;
+                    const rgbaBucketFile = admin
+                        .storage()
+                        .bucket()
+                        .file(rgbaFilePath);
 
-                    const bucketFile = admin.storage().bucket().file(filepath);
-                    uploadData = {
-                        file: bucketFile,
-                        type: mimetype,
-                        name: filename,
-                    };
+                    const stream = file
+                        .pipe(sharp().toFormat("png").ensureAlpha())
+                        .pipe(
+                            rgbaBucketFile.createWriteStream({
+                                metadata: {
+                                    contentType: "image/png",
+                                },
+                            })
+                        );
 
-                    file.pipe(
-                        bucketFile.createWriteStream({
-                            metadata: {
-                                contentType: mimetype,
-                            },
-                        })
-                    );
-                }
-            );
+                    const streamFinished = new Promise((resolve, reject) => {
+                        stream.on("finish", () => {
+                            uploadData = {
+                                file: rgbaBucketFile,
+                                type: "image/png",
+                                name: filename,
+                            };
+                            resolve();
+                        });
 
-            busboy.on("finish", async () => {
-                if (!uploadData) {
-                    console.error("No file received");
-                    return res.status(400).json({
-                        success: false,
-                        error: "No file received",
+                        stream.on("error", reject);
+                    });
+
+                    busboy.on("finish", async () => {
+                        try {
+                            await streamFinished;
+
+                            if (!uploadData) {
+                                console.error("No file received");
+                                return res.status(400).json({
+                                    success: false,
+                                    error: "No file received",
+                                });
+                            }
+
+                            const publicUrl = `https://storage.googleapis.com/${process.env.FB_STORAGE_BUCKET}/${uploadData.file.name}`;
+                            console.log("URL Pública:", publicUrl);
+
+                            return res
+                                .status(200)
+                                .json({ success: true, url: publicUrl });
+                        } catch (error) {
+                            console.error("Error processing image:", error);
+                            return res.status(500).json({
+                                success: false,
+                                error: "Internal Server Error processing image",
+                            });
+                        }
                     });
                 }
-
-                const publicUrl = `https://storage.googleapis.com/${process.env.FB_STORAGE_BUCKET}/${uploadData.file.name}`;
-                console.log("URL Pública:", publicUrl);
-
-                return res.status(200).json({ success: true, url: publicUrl });
-            });
-
+            );
             busboy.end(req.rawBody);
         } catch (error) {
             console.error("Error uploading image:", error);
