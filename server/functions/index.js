@@ -4,13 +4,22 @@ const cors = require("cors");
 const { handleFileUpload } = require("./src/handlers/handleFileUpload");
 const { handleSendToOpenai } = require("./src/handlers/handleSendToOpenai");
 
-const corsMiddleware = cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    headers: ["Content-Type"],
+const whitelist = [
+    "http://localhost:5173",
+    "https://professionalvision.netlify.app",
+];
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (whitelist.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true,
-    contentType: true,
-});
+};
+
+const corsMiddleware = cors(corsOptions);
 
 exports.upload = functions.https.onRequest(async (req, res) => {
     corsMiddleware(req, res, () => handleFileUpload(req, res));
