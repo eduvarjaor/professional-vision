@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ModalProps } from "../interfaces/ModalProps";
-import { AiOutlineClose } from 'react-icons/ai'
+import { AiOutlineClose, AiOutlineLoading3Quarters } from 'react-icons/ai'
+import { checkSize } from "../services/imageService";
 
 function Modal({ setModalOpen, selectedImage, imagePath, setSelectedImage, editImage }: ModalProps) {
     const [error, setError] = useState<string>('');
@@ -30,33 +31,6 @@ function Modal({ setModalOpen, selectedImage, imagePath, setSelectedImage, editI
         setModalOpen(false)
         setSelectedImage(null)
     }
-
-    const checkSize = async () => {
-        try {
-            setLoading(true);
-
-            if (selectedImage) {
-                const img = new Image();
-                img.src = URL.createObjectURL(selectedImage);
-
-                if (ref.current && ref.current.width === 256 && ref.current.height === 256 && selectedImage.type === 'image/png' && imagePath) {
-                    await editImage(imagePath);
-                } else {
-                    setError('Error: Choose 256 x 256 PNG image');
-                }
-            } else {
-                setError('Error: No image selected');
-            }
-        } catch (error) {
-            if (typeof error === 'string') {
-                setError('An error occurred: ' + error);
-            } else {
-                setError('An unexpected error occurred');
-            }
-        } finally {
-            setLoading(false);
-        }
-    }
     
     return ( 
         <div id="modal-container" className="relative z-50 p-[1rem] flex flex-col bg-gradient-to-r from-zinc-200 to-slate-300 rounded-lg shadow-xl">
@@ -73,10 +47,20 @@ function Modal({ setModalOpen, selectedImage, imagePath, setSelectedImage, editI
             {! error && 
             <button 
                 className="w-full p-[20px] border-none bg-blue-500 hover:bg-blue-700 text-white mt-5 rounded-lg shadow-md outline-none text-xl"
-                onClick={checkSize}
+                onClick={() => {
+                    if (selectedImage && imagePath) {
+                    checkSize(selectedImage, imagePath, editImage, setError, setLoading, ref);
+                    }
+                }}
                 disabled={loading}
             >
-                {loading ? "Loading..." : 'Generate'}
+                {loading ? (
+        <>
+            <div className="flex justify-center">
+            <AiOutlineLoading3Quarters className="animate-spin" />
+            </div>
+        </>
+            ) : 'Generate'}
             </button>}
             {error && 
             <button
