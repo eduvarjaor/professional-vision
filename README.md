@@ -10,10 +10,10 @@ This innovative application seamlessly blends the magic of AI with the convenien
 
 ### Index
 
-- <a href="#layout">Layout</a>
-- <a href="#requirements">Requirements</a>
-- <a href="#demonstration">Demonstration</a>
-- <a href="#technologies-used">Technologies used</a>
+-   <a href="#layout">Layout</a>
+-   <a href="#requirements">Requirements</a>
+-   <a href="#demonstration">Demonstration</a>
+-   <a href="#technologies-used">Technologies used</a>
 
 ### Layout
 
@@ -34,15 +34,12 @@ Before getting started, make sure your machine has the following tools: [Git](ht
 $ git clone https://github.com/eduvarjaor/professional-vision.git
 
 # Access project folder
-$ cd professional-vision
+$ cd professional-vision/client
 
 # Install dependencies
 $ pnpm i
 
-# Execute the backend in development mode
-$ pnpm run start
-
-# Execute the frontend in development mode
+# Execute the project in development mode
 $ pnpm run dev
 
 # The server will open on port:5173 - access http://localhost:5173/
@@ -60,6 +57,7 @@ The project uses these tools:
 2. [Typescript](https://www.typescriptlang.org/docs/)
 3. [TailwindCSS](https://tailwindcss.com/)
 4. [Node.js](https://nodejs.org/en)
+5. [Firebase](https://firebase.google.com/docs)
 
 ---
 

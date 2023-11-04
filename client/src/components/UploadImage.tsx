@@ -9,7 +9,7 @@ function UploadImage({ setImages }: UploadImageProps) {
     const [_error, setError] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [imagePath, _setImagePath] = useState<string>('');
+    const [imagePath, setImagePath] = useState<string>('');
     const windowWidth = window.innerWidth;
 
     const handleUpload = async (image: ChangeEvent<HTMLInputElement>) => {
@@ -27,19 +27,17 @@ function UploadImage({ setImages }: UploadImageProps) {
         formData.append('image', selectedFile, selectedFile.name);
 
         try {
-            console.log(`Selectedfile: ${selectedFile}`)
             const options = {
                 method: 'POST',
                 body: formData,
             };
-            const response = await fetch('http://localhost:5000/professional-vision-262b8/us-central1/upload', options);
+            const response = await fetch('https://us-central1-professional-vision-262b8.cloudfunctions.net/upload', options);
             const data = await response.json();
 
             if (data.success) {
-                console.log('Upload successful!');
-                console.log('Image URL:', data.url);
                 setSelectedImage(selectedFile);
                 setModalOpen(true);
+                setImagePath(data.path)
             } else {
                 console.error('Error uploading image:', data.error);
             }
@@ -48,20 +46,19 @@ function UploadImage({ setImages }: UploadImageProps) {
         }
     }
 
-    const handleEditImage = async () => {
+    const handleSendToOpenAI = async (path: string) => {
         try {
-            const response = await fetch('http://localhost:8000/editImage', {
+            const response = await fetch('https://us-central1-professional-vision-262b8.cloudfunctions.net/sendToOpenAI', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ imagePath }),
+                body: JSON.stringify({ path: path }),
             });
     
             const data = await response.json();
     
             if (data.success) {
-                console.log('Edited Image URL:', data.data);
                 setImages(data.data)
                 setError(null)
                 setModalOpen(false)
@@ -127,7 +124,8 @@ function UploadImage({ setImages }: UploadImageProps) {
                         setModalOpen={setModalOpen}
                         selectedImage={selectedImage} 
                         setSelectedImage={setSelectedImage}
-                        editImage={handleEditImage}
+                        editImage={handleSendToOpenAI}
+                        imagePath={imagePath}
                         />
                     </div>
                 </div>

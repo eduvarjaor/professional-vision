@@ -4,6 +4,10 @@ const cors = require("cors");
 const uuid = require("uuid");
 const Busboy = require("busboy");
 const sharp = require("sharp");
+const { OpenAI } = require("openai");
+const path = require("path");
+const fs = require("fs");
+const os = require("os");
 
 require("dotenv").config();
 
@@ -33,10 +37,10 @@ const corsMiddleware = cors({
     contentType: true,
 });
 
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 exports.upload = functions.https.onRequest(async (req, res) => {
     corsMiddleware(req, res, async () => {
-        console.log("Requisição recebida", req.method);
-
         if (req.method !== "POST") {
             return res.status(405).end();
         }
@@ -65,13 +69,31 @@ exports.upload = functions.https.onRequest(async (req, res) => {
                         );
 
                     const streamFinished = new Promise((resolve, reject) => {
-                        stream.on("finish", () => {
+                        stream.on("finish", async () => {
                             uploadData = {
                                 file: rgbaBucketFile,
                                 type: "image/png",
                                 name: filename,
+                                path: rgbaFilePath,
                             };
-                            resolve();
+
+                            const config = {
+                                action: "read",
+                                expires: "03-17-2025",
+                            };
+
+                            rgbaBucketFile.getSignedUrl(config, (err, url) => {
+                                if (err) {
+                                    console.error(
+                                        "Error generating signed URL",
+                                        err
+                                    );
+                                    reject(err);
+                                    return;
+                                }
+                                uploadData.signedUrl = url;
+                                resolve();
+                            });
                         });
 
                         stream.on("error", reject);
@@ -89,12 +111,11 @@ exports.upload = functions.https.onRequest(async (req, res) => {
                                 });
                             }
 
-                            const publicUrl = `https://storage.googleapis.com/${process.env.FB_STORAGE_BUCKET}/${uploadData.file.name}`;
-                            console.log("URL Pública:", publicUrl);
-
-                            return res
-                                .status(200)
-                                .json({ success: true, url: publicUrl });
+                            return res.status(200).json({
+                                success: true,
+                                url: uploadData.signedUrl,
+                                path: uploadData.path,
+                            });
                         } catch (error) {
                             console.error("Error processing image:", error);
                             return res.status(500).json({
@@ -112,6 +133,43 @@ exports.upload = functions.https.onRequest(async (req, res) => {
             return res
                 .status(500)
                 .json({ success: false, error: "Internal Server Error" });
+        }
+    });
+});
+
+exports.sendToOpenAI = functions.https.onRequest(async (req, res) => {
+    corsMiddleware(req, res, async () => {
+        if (req.method !== "POST") {
+            return res.status(405).end();
+        }
+
+        try {
+            const relativePath = req.body.path;
+            const bucket = admin.storage().bucket();
+
+            const file = bucket.file(relativePath);
+            const fileBuffer = await file.download();
+
+            const tempFilePath = path.join(os.tmpdir(), "tempImage.png");
+            fs.writeFileSync(tempFilePath, fileBuffer[0]);
+
+            const openAIResponse = await openai.images.edit({
+                image: fs.createReadStream(tempFilePath),
+                prompt: "Put a suit on that person",
+                size: "256x256",
+            });
+
+            fs.unlinkSync(tempFilePath);
+
+            return res
+                .status(200)
+                .json({ success: true, data: openAIResponse.data });
+        } catch (error) {
+            console.error("Error sending image to OpenAI:", error);
+            return res.status(500).json({
+                success: false,
+                error: "Internal Server Error sending image to OpenAI",
+            });
         }
     });
 });
