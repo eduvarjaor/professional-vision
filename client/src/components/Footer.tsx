@@ -9,7 +9,7 @@ function Footer() {
 
                 <div className="flex flex-col lg:mt-[6rem] space-y-3 xm:mt-[3rem] lg:pl-[0rem] xm:pl-[2rem] xm:w-[30rem] xx:mt-[1rem]">
                     <span className="font-bold text-xl">EDUARDO VARJÃO</span>
-                    <span className="lg:w-[29rem] text-justify text-base xm:w-[29rem] xm:whitespace-break-spaces">A developer focused on building front-end websites and web applications that lead to the success of any product.</span>
+                    <span className="lg:w-[29rem] text-justify text-base xm:w-[29rem] xm:whitespace-break-spaces">A Full Stack Developer who builds Websites and Web Applications that leads to the success of any product.</span>
                 </div>
 
                 <div>
